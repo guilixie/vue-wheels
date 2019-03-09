@@ -33,6 +33,7 @@
 </template>
 <script>
 /**
+ * 递归树
  * tree 树的数据 [ {label: '', icon: {class:'', color: ''}, children: [...]} ...]
  * focusable 当前focus是否高亮
  * curidex 当前节点的各级下标，如 '0', '0_0', '0_0_1'...
