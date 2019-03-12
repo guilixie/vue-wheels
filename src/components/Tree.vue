@@ -1,8 +1,8 @@
 <template>
-	<ul class="base-tree-node">
-		<li class="tree-node-wrap" v-for="(item, index) in tree" :key="index" v-show="!item.hide">
+	<ul class="tree-node">
+		<li class="tree-node--wrap" v-for="(item, index) in tree" :key="index" v-show="!item.hide">
 			<div
-				class="tree-node-content"
+				class="tree-node--content"
 				:class="{
 					'is-focusable': focusable,
 					'is-expanded': item.expanded,
@@ -11,10 +11,10 @@
 				data-action="current"
 				:data-idx="curindex != '' ? `${curindex}_${index}` : `${index}`"
 			>
-				<i class="glyphicon" :class="item.icon.class" :style="{ color: item.icon.color }"></i>
-				<span class="tree-node-text" :title="item.label">{{ item.label }}</span>
+				<i class="tree-node--icon" :class="item.icon.class" :style="{ color: item.icon.color }"></i>
+				<span class="tree-node--text" :title="item.label">{{ item.label }}</span>
 				<i
-					class="glyphicon glyphicon-triangle-right expand-icon"
+					class="tree-node--icon tree-node--expand-icon"
 					v-if="item.children && item.children.filter(item => !item.hide).length"
 					data-action="expand"
 				></i>
@@ -34,14 +34,14 @@
 <script>
 /**
  * 递归树
- * tree 树的数据 [ {label: '', icon: {class:'', color: ''}, children: [...]} ...]
- * focusable 当前focus是否高亮
+ * data 树的数据 [ {label: '', icon: {name:'', color: ''}, children: [...]} ...]
+ * focusable 当前focus是否高亮显示
  * curidex 当前节点的各级下标，如 '0', '0_0', '0_0_1'...
  */
 export default {
 	name: 'Tree',
 	props: {
-		tree: {
+		data: {
 			type: Array,
 			default() {
 				return []
@@ -58,23 +58,28 @@ export default {
 	}
 }
 </script>
+
 <style lang="scss" scoped>
-/* 打开关闭一级菜单过渡动画 */
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-	transition: all 0.4s ease;
+$animation-prefix: "slide-fade";
+$tree-node-prefix: "tree-node";
+
+/* 过渡动画 */
+.#{$animation-prefix}{
+  &-enter-active,
+  &-leave-active{
+    transition: all 0.4s ease;
+  }
+  &-enter,
+  &-leave-to {
+    transform: translateY(-10px);
+    transform-origin: top;
+    opacity: 0;
+    height: 0;
+  }
 }
 
-.slide-fade-enter,
-.slide-fade-leave-to {
-	transform: translateY(-10px);
-	transform-origin: top;
-	opacity: 0;
-	height: 0;
-}
-
-/* 菜单树主要样式 */
-.base-tree-node {
+/* 树主要样式 */
+.#{$tree-node-prefix} {
 	overflow: hidden;
 	list-style: none;
 	padding: 0;
@@ -82,7 +87,12 @@ export default {
 	box-sizing: border-box;
 	font-size: 14px;
 	padding-left: 15px;
-	.tree-node-content {
+  &--wrap {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+	&--content {
 		box-sizing: border-box;
 		height: 30px;
 		line-height: 30px;
@@ -106,7 +116,7 @@ export default {
 		&.is-focusable.is-current {
 			background-color: #f5f7fa;
 		}
-		.tree-node-text {
+		.tree-node--text {
 			display: inline-block;
 			color: #233;
 			padding-left: 5px;
