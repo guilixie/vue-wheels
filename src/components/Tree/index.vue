@@ -1,6 +1,6 @@
 <template>
 	<ul class="tree-node">
-		<li class="tree-node--wrap" v-for="(item, index) in tree" :key="index" v-show="!item.hide">
+		<li class="tree-node--wrap" v-for="(item, index) in data" :key="index" v-show="!item.hide">
 			<div
 				class="tree-node--content"
 				:class="{
