@@ -7,7 +7,7 @@
 <script>
 import Tree from '@/components/Tree'
 export default {
-	name: 'tree-demo',
+	name: 'TreeDemo',
 	components: { Tree },
 	data() {
 		return {

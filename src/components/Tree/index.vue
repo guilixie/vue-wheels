@@ -31,6 +31,7 @@
 		</li>
 	</ul>
 </template>
+
 <script>
 /**
  * 递归树
@@ -60,22 +61,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$animation-prefix: "slide-fade";
-$tree-node-prefix: "tree-node";
+$animation-prefix: 'slide-fade';
+$tree-node-prefix: 'tree-node';
 
 /* 过渡动画 */
-.#{$animation-prefix}{
-  &-enter-active,
-  &-leave-active{
-    transition: all 0.4s ease;
-  }
-  &-enter,
-  &-leave-to {
-    transform: translateY(-10px);
-    transform-origin: top;
-    opacity: 0;
-    height: 0;
-  }
+.#{$animation-prefix} {
+	&-enter-active,
+	&-leave-active {
+		transition: all 0.4s ease;
+	}
+	&-enter,
+	&-leave-to {
+		transform: translateY(-10px);
+		transform-origin: top;
+		opacity: 0;
+		height: 0;
+	}
 }
 
 /* 树主要样式 */
@@ -87,11 +88,11 @@ $tree-node-prefix: "tree-node";
 	box-sizing: border-box;
 	font-size: 14px;
 	padding-left: 15px;
-  &--wrap {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-  }
+	&--wrap {
+		box-sizing: border-box;
+		padding: 0;
+		margin: 0;
+	}
 	&--content {
 		box-sizing: border-box;
 		height: 30px;
