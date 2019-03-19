@@ -19,6 +19,9 @@ export default {
 </script>
 <style lang="scss" scoped>
 .main-layout {
+	width: 100%;
+	height: 100%;
+	display: flex;
 }
 .left-content {
 }
