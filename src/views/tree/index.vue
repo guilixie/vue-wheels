@@ -1,6 +1,6 @@
 <template>
 	<div class="tree-demo">
-		<tree :data="data" focusable @node-click="handleNodeClick"></tree>
+		<tree :data="data" focusable accordion @node-click="handleNodeClick"></tree>
 	</div>
 </template>
 

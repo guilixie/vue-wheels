@@ -1,45 +1,13 @@
 <template>
-	<ul class="tree-node">
-		<li
-			class="tree-node--wrap"
-			v-for="(item, index) in computedData"
-			:key="index"
-			v-show="!item.hide"
-			:aria-expanded="item.expanded"
-			:aria-current="item.current"
-			:aria-hide="item.hide"
-			:aria-level="item.$rank"
-			@click.stop="bindEvent(item)"
-		>
-			<div
-				class="tree-node--content"
-				:class="{
-					'is-focusable': focusable,
-					'is-expanded': item.expanded,
-					'is-current': item.current
-				}"
-			>
-				<span
-					class="tree-node--expand-icon"
-					v-if="item.children && item.children.filter(item => !item.hide).length"
-				></span>
-				<span class="tree-node--text" :title="item.label">{{ item.label }}</span>
-			</div>
-			<transition name="slide-fade">
-				<tree
-					:data="item.children"
-					:focusable="focusable"
-					v-if="item.children && item.children.length"
-					v-show="item.expanded"
-				></tree>
-			</transition>
-		</li>
-	</ul>
+	<div class="tree-wrap" @click.stop="bindEvent">
+		<tree-unit :data="computedData" :focusable="focusable" :indent="indent"></tree-unit>
+	</div>
 </template>
 
 <script>
 import Vue from 'vue'
 import cloneDeep from 'lodash/cloneDeep'
+import TreeUnit from './TreeUnit'
 /**
  * 递归树
  * data 树的数据 [ {label: '', children: [...]} ...]
@@ -47,160 +15,114 @@ import cloneDeep from 'lodash/cloneDeep'
  */
 export default {
 	name: 'Tree',
+	components: { TreeUnit },
 	props: {
 		data: {
 			type: Array,
 			default() {
 				return []
 			}
-		},
+		}, // 数据
 		focusable: {
 			type: Boolean,
 			default: true
+		}, // 当前高亮
+		accordion: {
+			type: Boolean,
+			default: false
+		}, // 同级只展开一个
+		indent: {
+			type: Number,
+			default: 16
 		}
 	},
 	computed: {
 		computedData() {
-			const data = Vue.observable(cloneDeep(this.data))
-			this.buildData(data)
-			return data
+			return Vue.observable(this.buildData({ data: this.data }))
 		}
 	},
 	mounted() {
-		document.addEventListener('click', this.clearCurrentEvent)
+		document.addEventListener('click', this.clearCurrent)
 	},
 	beforeDestroy() {
-		document.removeEventListener('click', this.clearCurrentEvent)
+		document.removeEventListener('click', this.clearCurrent)
 	},
 	methods: {
-		bindEvent(curNode) {
-			this.resetTreeProps(curNode.$data, { current: false })
-			this.setPropReactively(curNode, 'current', this.focusable)
+		bindEvent(ev) {
+			const curEle = this.findTargetEle(ev.target)
+			if (!curEle) return
+			const position = curEle.getAttribute('aria-position').split('_')
+			const curNode = this.findNodeByPosition(position)
+			this.clearCurrent()
+			curNode.current = true
+			if (this.accordion) {
+				this.resetTreeProps(this.computedData, { expanded: false }, curNode)
+			}
 			if (curNode.children && curNode.children.length) {
-				this.setPropReactively(curNode, 'expanded', !curNode.expanded)
+				curNode.expanded = !curNode.expanded
 			}
 			this.$emit('node-click', curNode)
 		},
-		buildData(data = [], $parent = null, $rank = 0, $root = null, $data = data) {
-			data.forEach((node, index) => {
-				this.setAllPropReactively(node, {
+		findNodeByPosition(posArr, nodes = this.computedData) {
+			const [first, ...rest] = posArr
+			const node = nodes[first]
+			return rest.length ? this.findNodeByPosition(rest, node.children) : node
+		},
+		findTargetEle(target, targetCls = 'j-node-target', stopCls = 'tree-node') {
+			const clsList = target.classList
+			if (clsList.contains(targetCls)) {
+				return target
+			} else if (clsList.contains(stopCls)) {
+				return null
+			} else {
+				return this.findTargetEle(target.parentNode, targetCls, stopCls)
+			}
+		},
+		buildData({ data = [], $parent = null, $root = null, $level = 1 }) {
+			return data.map((node, index) => {
+				const currentNode = {
 					$index: index,
-					$rank: $rank + 1,
+					$position: $parent ? `${$parent.$position}_${index}` : `${index}`,
+					$level,
 					$parent,
 					$root,
-					$data,
 					hide: false,
 					expanded: false,
 					current: false,
-					...node
-				})
-				if ($rank === 1) {
-					node.$root = $parent
+					...cloneDeep(node)
 				}
-				this.buildData(node.children, node, node.$rank, node.$root, node.$data)
+				if ($level === 1) {
+					currentNode.$root = currentNode
+				}
+				currentNode.children = this.buildData({
+					data: node.children,
+					$parent: currentNode,
+					$root: currentNode.$root,
+					$level: currentNode.$level + 1
+				})
+				return currentNode
 			})
 		},
-		setAllPropReactively(obj, opt) {
-			Object.entries(opt).forEach(([prop, val]) => {
-				this.setPropReactively(obj, prop, val)
-			})
-		},
-		setPropReactively(obj, prop, val) {
-			if (obj.hasOwnProperty(prop)) {
-				obj[prop] = val
-			} else {
-				Vue.set(obj, prop, val)
-			}
-		},
-		resetTreeProps(data = [], opt = {}) {
+		resetTreeProps(data = [], opt = {}, curNode) {
 			data.forEach(node => {
 				Object.entries(opt).forEach(([key, value]) => {
-					this.setPropReactively(node, key, value)
-					if (node.children && node.children.length) {
-						this.resetTreeProps(node.children, opt)
+					const hasChildren = !!(node.children && node.children.length)
+					if (curNode) {
+						if (curNode.$level === node.$level) {
+							curNode.$position !== node.$position && (node[key] = value)
+						} else if (hasChildren) {
+							this.resetTreeProps(node.children, opt, curNode)
+						}
+					} else {
+						node[key] = value
+						hasChildren && this.resetTreeProps(node.children, opt)
 					}
 				})
 			})
 		},
-		clearCurrentEvent() {
+		clearCurrent() {
 			this.resetTreeProps(this.computedData, { current: false })
 		}
 	}
 }
 </script>
-
-<style lang="scss" scoped>
-$animation-prefix: 'slide-fade';
-$tree-node-prefix: 'tree-node';
-
-/* 过渡动画 */
-.#{$animation-prefix} {
-	&-enter-active,
-	&-leave-active {
-		transition: all 0.4s ease;
-	}
-	&-enter,
-	&-leave-to {
-		transform: translateY(-10px);
-		transform-origin: top;
-		opacity: 0;
-		height: 0;
-	}
-}
-
-/* 树主要样式 */
-.#{$tree-node-prefix} {
-	overflow: hidden;
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	box-sizing: border-box;
-	font-size: 14px;
-	padding-left: 15px;
-	&--wrap {
-		box-sizing: border-box;
-		padding: 0;
-		margin: 0;
-	}
-	&--expand-icon {
-		display: inline-block;
-		color: #c0c4cc;
-		cursor: pointer;
-		width: 0;
-		height: 0;
-		border: 4px solid transparent;
-		border-right: 0;
-		border-left: 5px solid #bbb;
-		transition: transform 0.3s ease-in-out;
-	}
-	&--text {
-		display: inline-block;
-		color: #233;
-		padding-left: 5px;
-		padding-right: 5px;
-		box-sizing: border-box;
-		max-width: 16em;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-	&--content {
-		box-sizing: border-box;
-		height: 30px;
-		line-height: 30px;
-		cursor: pointer;
-		display: flex;
-		align-items: baseline;
-		&.is-expanded {
-			.#{$tree-node-prefix}--expand-icon {
-				transform: rotate(90deg);
-				transform-origin: center;
-			}
-		}
-		&:hover,
-		&.is-focusable.is-current {
-			background-color: #f5f7fa;
-		}
-	}
-}
-</style>
