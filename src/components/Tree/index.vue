@@ -1,6 +1,16 @@
 <template>
 	<ul class="tree-node">
-		<li class="tree-node--wrap" v-for="(item, index) in data" :key="index" v-show="!item.hide">
+		<li
+			class="tree-node--wrap"
+			v-for="(item, index) in computedData"
+			:key="index"
+			v-show="!item.hide"
+			:aria-expanded="item.expanded"
+			:aria-current="item.current"
+			:aria-hide="item.hide"
+			:aria-level="item.$rank"
+			@click.stop="bindEvent(item)"
+		>
 			<div
 				class="tree-node--content"
 				:class="{
@@ -8,21 +18,17 @@
 					'is-expanded': item.expanded,
 					'is-current': item.current
 				}"
-				data-action="current"
-				:data-idx="curindex != '' ? `${curindex}_${index}` : `${index}`"
 			>
-				<i
+				<span
 					class="tree-node--expand-icon"
 					v-if="item.children && item.children.filter(item => !item.hide).length"
-					data-action="expand"
-				></i>
+				></span>
 				<span class="tree-node--text" :title="item.label">{{ item.label }}</span>
 			</div>
 			<transition name="slide-fade">
 				<tree
 					:data="item.children"
 					:focusable="focusable"
-					:curindex="curindex != '' ? `${curindex}_${index}` : `${index}`"
 					v-if="item.children && item.children.length"
 					v-show="item.expanded"
 				></tree>
@@ -32,11 +38,12 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import cloneDeep from 'lodash/cloneDeep'
 /**
  * 递归树
  * data 树的数据 [ {label: '', children: [...]} ...]
  * focusable 当前focus是否高亮显示
- * curidex 当前节点的各级下标，如 '0', '0_0', '0_0_1'...
  */
 export default {
 	name: 'Tree',
@@ -47,13 +54,76 @@ export default {
 				return []
 			}
 		},
-		curindex: {
-			type: String,
-			default: ''
-		},
 		focusable: {
 			type: Boolean,
-			default: false
+			default: true
+		}
+	},
+	computed: {
+		computedData() {
+			const data = Vue.observable(cloneDeep(this.data))
+			this.buildData(data)
+			return data
+		}
+	},
+	mounted() {
+		document.addEventListener('click', this.clearCurrentEvent)
+	},
+	beforeDestroy() {
+		document.removeEventListener('click', this.clearCurrentEvent)
+	},
+	methods: {
+		bindEvent(curNode) {
+			this.resetTreeProps(curNode.$data, { current: false })
+			this.setPropReactively(curNode, 'current', this.focusable)
+			if (curNode.children && curNode.children.length) {
+				this.setPropReactively(curNode, 'expanded', !curNode.expanded)
+			}
+			this.$emit('node-click', curNode)
+		},
+		buildData(data = [], $parent = null, $rank = 0, $root = null, $data = data) {
+			data.forEach((node, index) => {
+				this.setAllPropReactively(node, {
+					$index: index,
+					$rank: $rank + 1,
+					$parent,
+					$root,
+					$data,
+					hide: false,
+					expanded: false,
+					current: false,
+					...node
+				})
+				if ($rank === 1) {
+					node.$root = $parent
+				}
+				this.buildData(node.children, node, node.$rank, node.$root, node.$data)
+			})
+		},
+		setAllPropReactively(obj, opt) {
+			Object.entries(opt).forEach(([prop, val]) => {
+				this.setPropReactively(obj, prop, val)
+			})
+		},
+		setPropReactively(obj, prop, val) {
+			if (obj.hasOwnProperty(prop)) {
+				obj[prop] = val
+			} else {
+				Vue.set(obj, prop, val)
+			}
+		},
+		resetTreeProps(data = [], opt = {}) {
+			data.forEach(node => {
+				Object.entries(opt).forEach(([key, value]) => {
+					this.setPropReactively(node, key, value)
+					if (node.children && node.children.length) {
+						this.resetTreeProps(node.children, opt)
+					}
+				})
+			})
+		},
+		clearCurrentEvent() {
+			this.resetTreeProps(this.computedData, { current: false })
 		}
 	}
 }
@@ -93,16 +163,21 @@ $tree-node-prefix: 'tree-node';
 		margin: 0;
 	}
 	&--expand-icon {
-		position: relative;
-		left: 10px;
-		font-size: 12px;
+		display: inline-block;
 		color: #c0c4cc;
+		cursor: pointer;
+		width: 0;
+		height: 0;
+		border: 4px solid transparent;
+		border-right: 0;
+		border-left: 5px solid #bbb;
 		transition: transform 0.3s ease-in-out;
 	}
 	&--text {
 		display: inline-block;
 		color: #233;
 		padding-left: 5px;
+		padding-right: 5px;
 		box-sizing: border-box;
 		max-width: 16em;
 		white-space: nowrap;

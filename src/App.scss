@@ -17,3 +17,25 @@ body {
     box-sizing: border-box;
     height: 100%;
 }
+
+.main-layout {
+	width: 1200px;
+	padding: 0;
+	margin: 0 auto;
+	height: 100%;
+    display: flex;
+    box-sizing: border-box;
+}
+
+.side-content {
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.left-content {
+	flex: 0 1 240px;
+}
+
+.right-content {
+	flex: auto;
+}

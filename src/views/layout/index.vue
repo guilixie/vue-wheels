@@ -1,9 +1,9 @@
 <template>
 	<div class="main-layout">
-		<div class="left-content">
+		<div class="side-content left-content">
 			<side-nav></side-nav>
 		</div>
-		<div class="right-content">
+		<div class="side-content right-content">
 			<router-view></router-view>
 		</div>
 	</div>
@@ -17,14 +17,3 @@ export default {
 	}
 }
 </script>
-<style lang="scss" scoped>
-.main-layout {
-	width: 100%;
-	height: 100%;
-	display: flex;
-}
-.left-content {
-}
-.right-content {
-}
-</style>
