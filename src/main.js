@@ -6,6 +6,12 @@ import store from './store'
 import 'normalize.css'
 import './App.scss'
 
+// auto import icons
+import './assets/icons'
+
+// auto register components
+import './autoreg'
+
 Vue.config.productionTip = false
 
 new Vue({

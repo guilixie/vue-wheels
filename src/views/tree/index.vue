@@ -5,10 +5,8 @@
 </template>
 
 <script>
-import Tree from '@/components/Tree'
 export default {
 	name: 'TreeDemo',
-	components: { Tree },
 	data() {
 		return {
 			data: [
