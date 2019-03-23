@@ -7,12 +7,15 @@ import 'normalize.css'
 import './App.scss'
 
 // auto import icons
-import './assets/icons'
+import icons from './assets/icons'
 
 // auto register components
 import './autoreg'
 
 Vue.config.productionTip = false
+
+// store icons
+store.commit('updateIcons', icons)
 
 new Vue({
 	router,
