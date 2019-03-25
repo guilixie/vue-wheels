@@ -1,6 +1,10 @@
 <template>
-	<div class="tree-demo">
-		<gl-tree :data="data" focusable accordion @node-click="handleNodeClick"></gl-tree>
+	<div class="panel-box">
+		<div class="panel-body">
+			<div class="tree-demo">
+				<gl-tree :data="data" focusable accordion @node-click="handleNodeClick"></gl-tree>
+			</div>
+		</div>
 	</div>
 </template>
 

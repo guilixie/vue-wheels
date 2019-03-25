@@ -11,34 +11,24 @@
 <script>
 export default {
 	name: 'SideNav',
-	data() {
-		return {
-			components: [
-				{
-					label: '树形控件',
-					name: 'Tree',
-					path: '/tree'
-				},
-				{
-					label: '矢量图标',
-					name: 'SvgIcon',
-					path: '/svgicon'
-				},
-				{
-					label: '全屏盒子',
-					name: 'ExtensibleBox',
-					path: '/extbox'
-				},
-				{
-					label: '可变尺寸盒子',
-					name: 'ResizableBox',
-					path: '/resbox'
-				}
-			]
+	computed: {
+		/* [{
+			label: '可变尺寸盒子',
+			name: 'ResizableBox',
+			path: '/resizebox'
+		}] */
+		components() {
+			return this.$router.options.routes
+				.filter(item => item.path !== '/')
+				.map(item => ({
+					label: item.meta.label,
+					name: item.meta.name,
+					path: item.path
+				}))
 		}
 	},
 	mounted() {
-		console.log(this.$router.options.routes)
+		document.title = `基本组件 - 树形控件`
 	}
 }
 </script>
